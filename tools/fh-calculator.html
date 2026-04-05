@@ -358,17 +358,27 @@ function calc() {
     nhiEl.className = 'nhi-box nhi-pass';
     nhiEl.innerHTML = '<strong>⚠️ 評分 >8 分，但尚未做基因檢測</strong>' +
       '建議安排基因檢測（LDLR / ApoB / PCSK9）：<br>' +
-      '• 若檢出 HoFH 突變 → 符合路徑 I<br>' +
-      '• 若未檢出 → 需符合 ≥3 項臨床徵狀（路徑 II）';
+      '• 若檢出 HoFH 突變 → 符合<b>路徑 I（基因確認）</b><br>' +
+      '• 若未檢出 → 需符合以下 4 項中 <b>≥3 項</b>才符合<b>路徑 II（臨床診斷）</b>：<br>' +
+      '<ol style="margin:6px 0 0 18px;font-size:0.85rem;line-height:1.6">' +
+      '<li>10 歲前出現<b>黃色瘤</b>（Xanthoma）</li>' +
+      '<li>未治療 LDL-C <b>&gt;500</b> mg/dL 或治療中 LDL-C <b>&gt;330</b> mg/dL</li>' +
+      '<li><b>雙親 TC &gt;250</b> mg/dL，或其中一方確診 FH</li>' +
+      '<li>20 歲前出現<b>冠心病</b>（CHD）</li>' +
+      '</ol>';
   } else if (total >= 6) {
     nhiEl.className = 'nhi-box nhi-fail';
     nhiEl.innerHTML = '<strong>❌ 評分未超過 8 分（Probable FH）</strong>' +
       '不符合 Repatha HoFH 路徑（需 >8 分）<br>' +
-      '若有 ASCVD 事件 → 可走 ASCVD 路徑申請（LDL ≥100 mg/dL）';
+      '若有 ASCVD 事件 → 可走 ASCVD 路徑申請（LDL ≥100 mg/dL）<br><br>' +
+      '<span style="font-size:0.82rem;color:#718096">💡 HoFH 路徑 II 臨床診斷需 ≥3/4 項：' +
+      '①10歲前黃色瘤 ②未治療LDL>500或治療中>330 ③雙親TC>250 ④20歲前CHD</span>';
   } else {
     nhiEl.className = 'nhi-box nhi-fail';
     nhiEl.innerHTML = '<strong>❌ 不符合 Repatha HoFH 給付條件</strong>' +
-      '若有 ASCVD 事件 → 可走 ASCVD 路徑（Repatha 或 Praluent）';
+      '若有 ASCVD 事件 → 可走 ASCVD 路徑（Repatha 或 Praluent）<br><br>' +
+      '<span style="font-size:0.82rem;color:#718096">💡 HoFH 路徑 II 臨床診斷需 ≥3/4 項：' +
+      '①10歲前黃色瘤 ②未治療LDL>500或治療中>330 ③雙親TC>250 ④20歲前CHD</span>';
   }
 }
 
