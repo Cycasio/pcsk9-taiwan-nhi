@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台灣 FH 建議診斷標準計算機</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #718096;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-header .emoji { font-size: 1.2rem; }
+  .card-body { padding: 0 18px 18px; }
+
+  /* Section colors */
+  .sec-family .card-header { background: #ebf8ff; color: #2b6cb0; }
+  .sec-personal .card-header { background: #fefcbf; color: #975a16; }
+  .sec-physical .card-header { background: #fed7e2; color: #97266d; }
+  .sec-ldl .card-header { background: #e9d8fd; color: #6b46c1; }
+  .sec-gene .card-header { background: #c6f6d5; color: #276749; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #edf2f7;
+    gap: 8px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row label {
+    flex: 1;
+    font-size: 0.9rem;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  .row .score {
+    min-width: 42px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #4a5568;
+    background: #edf2f7;
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+  .row .score.active { background: #4299e1; color: #fff; }
+
+  input[type="checkbox"], input[type="radio"] {
+    width: 20px; height: 20px;
+    accent-color: #4299e1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .note {
+    font-size: 0.78rem;
+    color: #a0aec0;
+    padding: 2px 0 0 28px;
+    line-height: 1.3;
+  }
+
+  /* Result panel */
+  .result-panel {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    padding: 24px;
+    text-align: center;
+    position: sticky;
+    bottom: 16px;
+    margin-top: 8px;
+  }
+  .result-score {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .result-label {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 2px;
+  }
+  .result-diagnosis {
+    margin-top: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 8px;
+    display: inline-block;
+  }
+  .diag-definite { background: #fed7d7; color: #c53030; }
+  .diag-probable { background: #fefcbf; color: #d69e2e; }
+  .diag-possible { background: #e9d8fd; color: #6b46c1; }
+  .diag-unlikely { background: #edf2f7; color: #718096; }
+
+  .nhi-box {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    text-align: left;
+  }
+  .nhi-pass { background: #c6f6d5; border: 1px solid #68d391; }
+  .nhi-fail { background: #fed7d7; border: 1px solid #fc8181; }
+  .nhi-box strong { display: block; margin-bottom: 4px; }
+
+  .legend {
+    margin-top: 16px;
+    font-size: 0.78rem;
+    color: #a0aec0;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .legend a { color: #4299e1; }
+
+  /* group note: each category picks highest */
+  .group-note {
+    font-size: 0.75rem;
+    color: #e53e3e;
+    padding: 4px 0 0 0;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🧬 台灣 FH 建議診斷標準</h1>
+  <p class="subtitle">中華民國血脂及動脈硬化學會 ｜ 健保給付 Repatha HoFH 路徑適用</p>
+
+  <!-- 家族史 -->
+  <div class="card sec-family">
+    <div class="card-header"><span class="emoji">👨‍👩‍👧</span> 家族史（取最高分，不累加）</div>
+    <div class="card-body">
+      <div class="row">
+        <input type="radio" name="family" id="f0" value="0" checked onchange="calc()">
+        <label for="f0">無相關家族史</label>
+        <div class="score" id="sf0">0</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="family" id="f1" value="1" onchange="calc()">
+        <label for="f1">一等親有早發 CAD（男&lt;55 / 女&lt;60）<br>或一等親 LDL-C &gt; 95th percentile</label>
+        <div class="score" id="sf1">1</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="family" id="f2" value="2" onchange="calc()">
+        <label for="f2">一等親有肌腱黃色瘤<br>和/或弓狀角膜（arcus cornealis &lt;45 歲）</label>
+        <div class="score" id="sf2">2</div>
+      </div>
+      <p class="group-note">※ 本區僅取最高分項目，不累加</p>
+    </div>
+  </div>
+
+  <!-- 個人病史 -->
+  <div class="card sec-personal">
+    <div class="card-header"><span class="emoji">🏥</span> 個人病史（取最高分，不累加）</div>
+    <div class="card-body">
+      <div class="row">
+        <input type="radio" name="personal" id="p0" value="0" checked onchange="calc()">
+        <label for="p0">無相關個人病史</label>
+        <div class="score" id="sp0">0</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="personal" id="p1" value="1" onchange="calc()">
+        <label for="p1">早發腦血管或周邊動脈疾病（男&lt;55 / 女&lt;60）</label>
+        <div class="score" id="sp1">1</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="personal" id="p2" value="2" onchange="calc()">
+        <label for="p2">早發冠心病 CAD（男&lt;55 / 女&lt;60）</label>
+        <div class="score" id="sp2">2</div>
+      </div>
+      <p class="group-note">※ 本區僅取最高分項目，不累加</p>
+    </div>
+  </div>
+
+  <!-- 理學檢查 -->
+  <div class="card sec-physical">
+    <div class="card-header"><span class="emoji">🔍</span> 理學檢查（取最高分，不累加）</div>
+    <div class="card-body">
+      <div class="row">
+        <input type="radio" name="physical" id="ph0" value="0" checked onchange="calc()">
+        <label for="ph0">無相關發現</label>
+        <div class="score" id="sph0">0</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="physical" id="ph4" value="4" onchange="calc()">
+        <label for="ph4">弓狀角膜 arcus cornealis（&lt;45 歲）</label>
+        <div class="score" id="sph4">4</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="physical" id="ph6" value="6" onchange="calc()">
+        <label for="ph6">肌腱黃色瘤 tendon xanthomata</label>
+        <div class="score" id="sph6">6</div>
+      </div>
+      <p class="group-note">※ 本區僅取最高分項目，不累加</p>
+    </div>
+  </div>
+
+  <!-- LDL-C -->
+  <div class="card sec-ldl">
+    <div class="card-header"><span class="emoji">🩸</span> LDL-C（未治療，擇一）</div>
+    <div class="card-body">
+      <div class="row">
+        <input type="radio" name="ldl" id="l0" value="0" checked onchange="calc()">
+        <label for="l0">&lt; 155 mg/dL</label>
+        <div class="score">0</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="ldl" id="l1" value="1" onchange="calc()">
+        <label for="l1">155 – 189 mg/dL</label>
+        <div class="score">1</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="ldl" id="l3" value="3" onchange="calc()">
+        <label for="l3">190 – 249 mg/dL</label>
+        <div class="score">3</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="ldl" id="l5" value="5" onchange="calc()">
+        <label for="l5">250 – 329 mg/dL</label>
+        <div class="score">5</div>
+      </div>
+      <div class="row">
+        <input type="radio" name="ldl" id="l8" value="8" onchange="calc()">
+        <label for="l8">≥ 330 mg/dL</label>
+        <div class="score">8</div>
+      </div>
+      <p class="note">※ 使用未治療前的 LDL-C 值；若已在治療中，可依用藥降幅反推</p>
+    </div>
+  </div>
+
+  <!-- 基因檢測 -->
+  <div class="card sec-gene">
+    <div class="card-header"><span class="emoji">🧪</span> 基因檢測</div>
+    <div class="card-body">
+      <div class="row">
+        <input type="checkbox" id="gene" value="8" onchange="calc()">
+        <label for="gene">確認 LDLR / ApoB / PCSK9 致病突變</label>
+        <div class="score" id="sgene">8</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="result-panel" id="resultPanel">
+    <div class="result-score" id="totalScore">0</div>
+    <div class="result-label">總分</div>
+    <div class="result-diagnosis" id="diagnosis">Unlikely</div>
+    <div class="nhi-box" id="nhiBox"></div>
+  </div>
+
+  <div class="legend">
+    依據：中華民國血脂及動脈硬化學會「臺灣血脂異常防治共識節錄」<br>
+    健保給付規定 2.6.4.1 Repatha HoFH 路徑（108/5/1、114/9/1）<br>
+    <a href="https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/getPDF?DurgFileName=2.6.4._20250901.pdf" target="_blank">📎 健保給付規定原文 PDF</a>
+  </div>
+</div>
+
+<script>
+function getRadioVal(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? parseInt(el.value) : 0;
+}
+
+function calc() {
+  const family = getRadioVal('family');
+  const personal = getRadioVal('personal');
+  const physical = getRadioVal('physical');
+  const ldl = getRadioVal('ldl');
+  const gene = document.getElementById('gene').checked ? 8 : 0;
+
+  const total = family + personal + physical + ldl + gene;
+
+  // Update score highlights
+  document.querySelectorAll('.score').forEach(s => s.classList.remove('active'));
+  // family
+  if (family > 0) document.getElementById('sf' + family).classList.add('active');
+  // personal
+  if (personal > 0) document.getElementById('sp' + personal).classList.add('active');
+  // physical
+  if (physical > 0) document.getElementById('sph' + physical).classList.add('active');
+  // gene
+  if (gene > 0) document.getElementById('sgene').classList.add('active');
+
+  // Display
+  const scoreEl = document.getElementById('totalScore');
+  const diagEl = document.getElementById('diagnosis');
+  const nhiEl = document.getElementById('nhiBox');
+
+  scoreEl.textContent = total;
+
+  let diagText, diagClass;
+  if (total > 8) {
+    diagText = 'Definite FH';
+    diagClass = 'diag-definite';
+    scoreEl.style.color = '#c53030';
+  } else if (total >= 6) {
+    diagText = 'Probable FH';
+    diagClass = 'diag-probable';
+    scoreEl.style.color = '#d69e2e';
+  } else if (total >= 3) {
+    diagText = 'Possible FH';
+    diagClass = 'diag-possible';
+    scoreEl.style.color = '#6b46c1';
+  } else {
+    diagText = 'Unlikely';
+    diagClass = 'diag-unlikely';
+    scoreEl.style.color = '#718096';
+  }
+
+  diagEl.textContent = diagText;
+  diagEl.className = 'result-diagnosis ' + diagClass;
+
+  // NHI eligibility
+  if (total > 8 && gene > 0) {
+    nhiEl.className = 'nhi-box nhi-pass';
+    nhiEl.innerHTML = '<strong>✅ 符合健保 Repatha HoFH 給付條件（路徑 I）</strong>' +
+      '評分 >8 分 + 基因確認 → 不需要 ASCVD 事件<br>' +
+      '前提：statin + ezetimibe 治療 6 個月，LDL-C 仍 >130 mg/dL';
+  } else if (total > 8 && gene === 0) {
+    nhiEl.className = 'nhi-box nhi-pass';
+    nhiEl.innerHTML = '<strong>⚠️ 評分 >8 分，但尚未做基因檢測</strong>' +
+      '建議安排基因檢測（LDLR / ApoB / PCSK9）：<br>' +
+      '• 若檢出 HoFH 突變 → 符合路徑 I<br>' +
+      '• 若未檢出 → 需符合 ≥3 項臨床徵狀（路徑 II）';
+  } else if (total >= 6) {
+    nhiEl.className = 'nhi-box nhi-fail';
+    nhiEl.innerHTML = '<strong>❌ 評分未超過 8 分（Probable FH）</strong>' +
+      '不符合 Repatha HoFH 路徑（需 >8 分）<br>' +
+      '若有 ASCVD 事件 → 可走 ASCVD 路徑申請（LDL ≥100 mg/dL）';
+  } else {
+    nhiEl.className = 'nhi-box nhi-fail';
+    nhiEl.innerHTML = '<strong>❌ 不符合 Repatha HoFH 給付條件</strong>' +
+      '若有 ASCVD 事件 → 可走 ASCVD 路徑（Repatha 或 Praluent）';
+  }
+}
+
+// Init
+calc();
+</script>
+</body>
+</html>
